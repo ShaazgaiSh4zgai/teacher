@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>mum</title>
+<title>Handwriting Animator</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 --bg:#eef1f6;--bar:#fff;--tx:#1c2433;--mut:#64708a;--bd:#d5dbe8;--acc:#1d4ed8;--accx:#fff;--paper:#fff;color-scheme:light}
@@ -41,15 +41,15 @@ body.hideui{background:var(--paper)}
 #show{display:none;position:fixed;right:10px;bottom:10px;opacity:0;font-size:12px;padding:6px 10px}
 body.hideui #show{display:block}#show:hover{opacity:1}
 #refimg{pointer-events:none}
-.orig{fill:none;stroke:#f28a3c;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.orig{fill:none;stroke:#f28a3c;stroke-width:var(--sw,12);stroke-linecap:round;stroke-linejoin:round;opacity:.9}
 .orig.ghosted{stroke:#e0707a;stroke-width:3;stroke-dasharray:2 7;opacity:.9}
 .orig.sel{stroke:#3b82f6}
 .hl{stroke:#2563eb;stroke-width:1.6}.hd{fill:#fff;stroke:#2563eb;stroke-width:2.5}
 .nd{fill:#fff;stroke:#2563eb;stroke-width:2.8}.nd.on{fill:#2563eb}
 .rb{fill:none;stroke:#2563eb;stroke-width:2;stroke-dasharray:8 6}.rh{fill:#2563eb}
-.cp{fill:none;stroke:#1d3a8a;stroke-width:12;stroke-linecap:round;stroke-linejoin:round}
+.cp{fill:none;stroke:#1d3a8a;stroke-width:var(--sw,12);stroke-linecap:round;stroke-linejoin:round}
 .gd{fill:none;stroke:#8d9bbd;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:.1 17}
-.ink{fill:none;stroke:#1d3a8a;stroke-width:14;stroke-linecap:round;stroke-linejoin:round}
+.ink{fill:none;stroke:#1d3a8a;stroke-width:var(--sw,12);stroke-linecap:round;stroke-linejoin:round}
 .bn{fill:#fff;stroke:#e0707a;stroke-width:2.5}.bt{font:700 17px system-ui,sans-serif;fill:#c0394a;text-anchor:middle;dominant-baseline:central}
 .sd{fill:#e0707a}.ar{fill:none;stroke:#8d9bbd;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 </style>
@@ -59,20 +59,16 @@ body.hideui #show{display:block}#show:hover{opacity:1}
   <div class="grp"><input id="lab" value="A" maxlength="12" aria-label="Character or word" spellcheck="false" autocomplete="off">
     <div class="seg" id="kinds"><button data-k="upper" class="on">ABC</button><button data-k="lower">abc</button><button data-k="num">123</button><button data-k="word">Word</button></div>
     <div class="seg only-draw" id="pages"><button data-p="slant" class="on">Slanted</button><button data-p="grid">Squared</button></div>
-    <button id="cfgb" title="Page guides, letter position and reference image">Page &amp; image</button></div>
+    <button id="cfgb" title="Letter position and reference image">Position &amp; image</button></div>
   <div class="grp only-draw"><div class="seg" id="tools"><button data-t="free" class="on">Freehand</button><button data-t="pen">Pen</button><button data-t="select">Select</button></div>
     <button id="finish" hidden>Finish path</button><button id="delpt" hidden>Delete point</button><button id="delpath" hidden>Delete path</button></div>
   <div class="grp only-draw"><button id="undo">Undo</button><button id="redo">Redo</button><button id="clear">Clear</button></div>
+  <div class="grp"><label class="sm">Stroke width <input type="range" id="sw" min="4" max="30" value="12"><span id="swv">12</span></label></div>
+  <div class="grp"><button id="zo" title="Zoom out">−</button><button id="zr" title="Reset zoom">100%</button><button id="zi" title="Zoom in">+</button></div>
   <div class="sp"></div>
   <div class="grp only-draw"><label class="sm">Smooth <input type="range" id="sm" min="0" max="100" value="75"></label><button id="prev">Preview clean</button><button id="gen" class="pri">Generate Animation</button></div>
   <div class="grp only-play"><button id="replay" class="pri">Replay</button><label class="sm">Speed <input type="range" id="spd" min="25" max="300" value="100"><span id="spv">1×</span></label><button id="edit">Edit drawing</button><button id="hide">Hide controls</button><button id="full">Full screen</button></div>
   <div id="panel" hidden>
-    <fieldset><legend>Page guides</legend>
-      <label class="sm">Line spacing <input type="range" id="c-hs" min="150" max="450" value="300"></label>
-      <label class="sm">Diagonal spacing <input type="range" id="c-ds" min="250" max="900" value="560"></label>
-      <label class="sm">Thickness <input type="range" id="c-th" min="5" max="30" value="10"></label>
-      <label class="sm">Margin <input type="range" id="c-mx" min="700" max="980" value="870"></label>
-      <button id="c-reset">Reset</button></fieldset>
     <fieldset><legend>Letter position</legend>
       <label class="sm">Left / right <input type="range" id="c-px" min="-250" max="250" value="0"></label><button id="c-ctr">Center</button></fieldset>
     <fieldset><legend>Reference image (tracing only)</legend>
@@ -230,8 +226,7 @@ function target(){
   const lab=[...$('#lab').value.trim()],ch=lab[0]||'',w=kind==='word'||(kind==='lower'&&lab.length>1),
     lo=kind==='lower'&&!w,a=lo&&ASC.includes(ch),d=w?lab.some(c=>DESC.includes(c)):lo&&DESC.includes(ch);
   const L=40,R=page==='slant'?cfg.mx-40:960,cx=(L+R)/2+cfg.px;let y0,y1;
-  if(page==='slant'){const B=360,b=cfg.hs/3;y0=lo&&!a?B-b:B-2*b;y1=d?B+b:B}
-  else{y0=lo&&!a?300:150;y1=d?550:450}
+  {const B=page==='slant'?360:345,b=page==='slant'?cfg.hs/3:85;y0=lo&&!a?B-b:B-2*b;y1=d?B+b:B}
   const mw=w?R-L:Math.min(R-L,500);
   return{x0:cx-mw/2,x1:cx+mw/2,cx,y0,y1,al:w&&d?'c':d?'t':'b'}}
 function bez(pts,first){
@@ -292,17 +287,21 @@ function slantSVG(){const{hs,ds,th,mx}=cfg,B=360,b=hs/3,s=.4;let d='',h='',z='';
   for(let n=-16;n<=16;n++){const x=330+ds*n;d+=`M${(x-840*s).toFixed(1)} 1200L${(x+1560*s).toFixed(1)} -1200`}
   for(let k=-14;k<=14;k++){const t=B-b+hs*k;h+=`M-2000 ${t}H3000M-2000 ${t+b}H3000`;z+=`M-2000 ${t+2*b}H3000`}
   return`<path d="${d}" fill="none" stroke="#a3a8d8" stroke-width="${1.8*th}"/><path d="${h}" fill="none" stroke="#6a70b5" stroke-width="${2*th}"/><path d="${z}" fill="none" stroke="#8c91c8" stroke-width="${1.8*th}" stroke-dasharray="10 9"/><line x1="${mx}" x2="${mx}" y1="-2000" y2="2600" stroke="#d32f2f" stroke-width="${3.2*th}"/>`}
-function drawRule(){const pc='#fff',g=cfg.hs/6;$('#sheet').setAttribute('fill',pc);document.documentElement.style.setProperty('--paper',pc);
+function drawRule(){const pc='#fff',g=200;$('#sheet').setAttribute('fill',pc);document.documentElement.style.setProperty('--paper',pc);
   $('#rule').innerHTML=page==='slant'?slantSVG()
-  :`<defs><pattern id="gp" width="${g}" height="${g}" patternUnits="userSpaceOnUse"><path d="M${g} 0H0V${g}" fill="none" stroke="#9cc3ea" stroke-width="${1.6*cfg.th}"/></pattern></defs><rect x="-2000" y="-2000" width="5000" height="4600" fill="url(#gp)"/>`}
+  :`<defs><pattern id="gp" x="400" y="160" width="${g}" height="${g}" patternUnits="userSpaceOnUse"><path d="M${g} 0H0V${g}" fill="none" stroke="#9cc3ea" stroke-width="${1.6*cfg.th}"/></pattern></defs><rect x="-2000" y="-2000" width="5000" height="4600" fill="url(#gp)"/>`}
 document.querySelectorAll('#pages button').forEach(b=>b.onclick=()=>{page=b.dataset.p;document.querySelectorAll('#pages button').forEach(x=>x.classList.toggle('on',x===b));drawRule();paint()});
 $('#sm').oninput=e=>{sm=+e.target.value;if(showClean)paint()};
+$('#sw').oninput=e=>{svg.style.setProperty('--sw',e.target.value);$('#swv').textContent=e.target.value};
+let zoom=1;
+function applyZoom(){const w=1000/zoom,h=600/zoom;svg.setAttribute('viewBox',`${500-w/2} ${300-h/2} ${w} ${h}`);$('#zr').textContent=Math.round(zoom*100)+'%'}
+$('#zi').onclick=()=>{zoom=Math.min(3,zoom*1.25);applyZoom()};
+$('#zo').onclick=()=>{zoom=Math.max(.5,zoom/1.25);applyZoom()};
+$('#zr').onclick=()=>{zoom=1;applyZoom()};
 $('#lab').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur()});
 const after=()=>{if(body.dataset.mode==='play')generate();else paint()};
-const bindC=(id,k,div,regen)=>$(id).oninput=e=>{cfg[k]=+e.target.value/div;drawRule();if(regen)after()};
-bindC('#c-hs','hs',1,true);bindC('#c-ds','ds',1);bindC('#c-th','th',10);bindC('#c-mx','mx',1,true);bindC('#c-px','px',1,true);
+$('#c-px').oninput=e=>{cfg.px=+e.target.value;after()};
 $('#c-ctr').onclick=()=>{cfg.px=0;$('#c-px').value=0;after()};
-$('#c-reset').onclick=()=>{const px=cfg.px;Object.assign(cfg,CFG0,{px});$('#c-hs').value=300;$('#c-ds').value=560;$('#c-th').value=10;$('#c-mx').value=870;drawRule();after()};
 $('#cfgb').onclick=()=>{const p=$('#panel');p.hidden=!p.hidden;$('#cfgb').classList.toggle('on',!p.hidden)};
 
 /* ---------- reference image (tracing layer, never animated) ---------- */
