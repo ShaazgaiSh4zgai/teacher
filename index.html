@@ -4,383 +4,110 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Handwriting Animator</title>
-<style>
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
---bg:#eef1f6;--bar:#fff;--tx:#1c2433;--mut:#64708a;--bd:#d5dbe8;--acc:#1d4ed8;--accx:#fff;--paper:#fff;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141c;--bar:#1a202c;--tx:#e6eaf3;--mut:#93a0ba;--bd:#2c3547;--acc:#6d93ff;--accx:#0b1020;color-scheme:dark}}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--tx);font:15px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;height:100%}
-#bar{background:var(--bar);border-bottom:1px solid var(--bd);padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.grp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.sp{flex:1}
-.sm{display:flex;gap:6px;align-items:center;color:var(--mut);font-size:13px}.sm input{width:90px}
-button,input{font:inherit;color:var(--tx)}
-button{background:var(--bar);border:1px solid var(--bd);border-radius:9px;padding:8px 13px;cursor:pointer}
-button:hover{border-color:var(--acc)}
-button:disabled{opacity:.4;cursor:default}
-button[hidden]{display:none}
-button.on{background:var(--acc);color:var(--accx);border-color:var(--acc)}
-button.pri{background:var(--acc);color:var(--accx);border-color:var(--acc);font-weight:600}
-#lab{width:96px;text-align:center;font-size:22px;padding:4px 8px;border:1px solid var(--bd);border-radius:9px;background:var(--bg)}
-.seg{display:flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:9px 0 0 9px;margin:0}.seg button:last-child{border-radius:0 9px 9px 0}
-#panel{flex-basis:100%;display:flex;flex-wrap:wrap;gap:10px;padding-top:10px;border-top:1px solid var(--bd)}
-#panel[hidden]{display:none}
-fieldset{border:1px solid var(--bd);border-radius:10px;padding:6px 10px 8px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:0}
-legend{font-size:12px;color:var(--mut);padding:0 4px}
-fieldset button{padding:5px 10px;font-size:13px}
-#msg{color:var(--mut);font-size:13px;min-height:1em;padding:6px 14px 0}
-#stage{flex:1;min-height:0;padding:10px 14px 14px;display:flex}
-#paper{width:100%;height:100%;border-radius:10px;touch-action:none;cursor:crosshair;background:var(--paper);box-shadow:0 2px 14px rgba(0,0,0,.18)}
-#paper.sel,body[data-mode=play] #paper{cursor:default}
-body[data-mode=draw] .only-play,body[data-mode=play] .only-draw{display:none}
-body[data-mode=play] #ref,body[data-mode=play] #refui{display:none}
-body.hideui #bar,body.hideui #msg{display:none}
-body.hideui #stage{padding:0}body.hideui #paper{border-radius:0;box-shadow:none}
-body.hideui{background:var(--paper)}
-#show{display:none;position:fixed;right:10px;bottom:10px;opacity:0;font-size:12px;padding:6px 10px}
-body.hideui #show{display:block}#show:hover{opacity:1}
-#refimg{pointer-events:none}
-.orig{fill:none;stroke:#f28a3c;stroke-width:var(--sw,12);stroke-linecap:round;stroke-linejoin:round;opacity:.9}
-.orig.ghosted{stroke:#e0707a;stroke-width:3;stroke-dasharray:2 7;opacity:.9}
-.orig.sel{stroke:#3b82f6}
-.hl{stroke:#2563eb;stroke-width:1.6}.hd{fill:#fff;stroke:#2563eb;stroke-width:2.5}
-.nd{fill:#fff;stroke:#2563eb;stroke-width:2.8}.nd.on{fill:#2563eb}
-.rb{fill:none;stroke:#2563eb;stroke-width:2;stroke-dasharray:8 6}.rh{fill:#2563eb}
-.cp{fill:none;stroke:#1d3a8a;stroke-width:var(--sw,12);stroke-linecap:round;stroke-linejoin:round}
-.gd{fill:none;stroke:#8d9bbd;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:.1 17}
-.ink{fill:none;stroke:#1d3a8a;stroke-width:var(--sw,12);stroke-linecap:round;stroke-linejoin:round}
-.bn{fill:#fff;stroke:#e0707a;stroke-width:2.5}.bt{font:700 17px system-ui,sans-serif;fill:#c0394a;text-anchor:middle;dominant-baseline:central}
-.sd{fill:#e0707a}.ar{fill:none;stroke:#8d9bbd;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body data-mode="draw">
+
+<!-- ===== Toolbar ===== -->
 <div id="bar">
-  <div class="grp"><input id="lab" value="A" maxlength="12" aria-label="Character or word" spellcheck="false" autocomplete="off">
+  <!-- Letter & type -->
+  <div class="grp">
+    <button id="sidebar-toggle" class="icon-btn" title="Toggle layers panel">☰</button>
+    <input id="lab" value="A" maxlength="12" aria-label="Character or word" spellcheck="false" autocomplete="off">
     <div class="seg" id="kinds"><button data-k="upper" class="on">ABC</button><button data-k="lower">abc</button><button data-k="num">123</button><button data-k="word">Word</button></div>
-    <div class="seg only-draw" id="pages"><button data-p="slant" class="on">Slanted</button><button data-p="grid">Squared</button></div>
-    <button id="cfgb" title="Letter position and reference image">Position &amp; image</button></div>
-  <div class="grp only-draw"><div class="seg" id="tools"><button data-t="free" class="on">Freehand</button><button data-t="pen">Pen</button><button data-t="select">Select</button></div>
-    <button id="finish" hidden>Finish path</button><button id="delpt" hidden>Delete point</button><button id="delpath" hidden>Delete path</button></div>
+  </div>
+  <div class="bar-sep"></div>
+  <!-- Page style -->
+  <div class="grp only-draw">
+    <div class="seg" id="pages"><button data-p="slant" class="on">Slanted</button><button data-p="grid">Squared</button></div>
+  </div>
+  <div class="bar-sep only-draw"></div>
+  <!-- Drawing tools -->
+  <div class="grp only-draw">
+    <div class="seg" id="tools"><button data-t="free" class="on">Freehand</button><button data-t="pen">Pen</button><button data-t="select">Select</button></div>
+    <button id="finish" hidden>Finish</button><button id="delpt" hidden>Del point</button><button id="delpath" hidden>Del path</button>
+  </div>
+  <div class="bar-sep only-draw"></div>
+  <!-- Edit operations -->
   <div class="grp only-draw"><button id="undo">Undo</button><button id="redo">Redo</button><button id="clear">Clear</button></div>
-  <div class="grp"><label class="sm">Stroke width <input type="range" id="sw" min="4" max="30" value="12"><span id="swv">12</span></label></div>
+  <div class="bar-sep only-draw"></div>
+  <!-- Stroke & zoom -->
+  <div class="grp"><label class="sm">Width <input type="range" id="sw" min="4" max="30" value="12"><span id="swv">12</span></label></div>
   <div class="grp"><button id="zo" title="Zoom out">−</button><button id="zr" title="Reset zoom">100%</button><button id="zi" title="Zoom in">+</button></div>
   <div class="sp"></div>
-  <div class="grp only-draw"><label class="sm">Smooth <input type="range" id="sm" min="0" max="100" value="75"></label><button id="prev">Preview clean</button><button id="gen" class="pri">Generate Animation</button></div>
-  <div class="grp only-play"><button id="replay" class="pri">Replay</button><label class="sm">Speed <input type="range" id="spd" min="25" max="300" value="100"><span id="spv">1×</span></label><button id="edit">Edit drawing</button><button id="hide">Hide controls</button><button id="full">Full screen</button></div>
+  <!-- Draw-mode actions -->
+  <div class="grp only-draw">
+    <label class="sm">Smooth <input type="range" id="sm" min="0" max="100" value="75"></label>
+    <button id="prev">Preview</button>
+    <button id="cfgb" title="Settings">⚙</button>
+    <button id="gen" class="pri">Generate ▶</button>
+  </div>
+  <!-- Play-mode actions -->
+  <div class="grp only-play">
+    <button id="replay" class="pri">Replay ▶</button>
+    <label class="sm">Speed <input type="range" id="spd" min="25" max="300" value="100"><span id="spv">1×</span></label>
+    <button id="edit">Edit</button>
+    <button id="hide">Hide UI</button>
+    <button id="full">Fullscreen</button>
+  </div>
+
+  <!-- Collapsible settings panel -->
   <div id="panel" hidden>
-    <fieldset><legend>Letter position</legend>
-      <label class="sm">Left / right <input type="range" id="c-px" min="-250" max="250" value="0"></label><button id="c-ctr">Center</button></fieldset>
-    <fieldset><legend>Reference image (tracing only)</legend>
+    <fieldset><legend>Position</legend>
+      <label class="sm">Offset <input type="range" id="c-px" min="-250" max="250" value="0"></label>
+      <button id="c-ctr">Center</button></fieldset>
+    <fieldset><legend>Reference image</legend>
       <button id="r-imp">Import</button><input type="file" id="r-file" accept="image/*" hidden>
       <button id="r-vis" disabled>Hide</button>
       <label class="sm">Opacity <input type="range" id="r-op" min="5" max="100" value="50" disabled></label>
       <label class="sm">Size <input type="range" id="r-sz" min="20" max="300" value="100" disabled></label>
       <button id="r-adj" disabled>Move / resize</button><button id="r-del" disabled>Remove</button></fieldset>
+    <fieldset><legend>Guide dots</legend>
+      <label class="sm">Size <input type="range" id="dot-size" min="2" max="20" value="7"><span id="dot-size-v">7</span></label>
+      <label class="sm">Spacing <input type="range" id="dot-spacing" min="5" max="60" value="17"><span id="dot-spacing-v">17</span></label></fieldset>
+    <fieldset><legend>Arrows</legend>
+      <label class="sm">Size <input type="range" id="arrow-size" min="0.3" max="3" value="1" step="0.1"><span id="arrow-size-v">1.0</span></label>
+      <label class="sm">Spacing <input type="range" id="arrow-spacing" min="40" max="500" value="200"><span id="arrow-spacing-v">200</span></label></fieldset>
+    <fieldset><legend>Step numbers</legend>
+      <button id="reset-nums">Reset positions</button></fieldset>
   </div>
 </div>
+
 <div id="msg"></div>
-<div id="stage">
-<svg id="paper" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <rect id="sheet" x="-2000" y="-2000" width="5000" height="4600" fill="#fff"/>
-  <g id="rule"></g>
-  <g id="ref" style="display:none"><image id="refimg" preserveAspectRatio="none"/></g>
-  <g id="ghost"></g><g id="refui"></g><g id="guides"></g><g id="ink"></g>
-  <g id="pen" style="display:none"><g transform="rotate(32)">
-    <polygon points="0,0 -9,-32 9,-32" fill="#e9c58f"/><polygon points="0,0 -3.2,-11 3.2,-11" fill="#2b2f3a"/>
-    <rect x="-9" y="-132" width="18" height="100" fill="#f5c230"/><rect x="-2" y="-132" width="4" height="100" fill="#e2a90f"/>
-    <rect x="-9.5" y="-146" width="19" height="14" fill="#aeb6c4"/><rect x="-9.5" y="-141" width="19" height="3" fill="#8d96a8"/>
-    <rect x="-9.5" y="-160" width="19" height="14" rx="5" fill="#f08c9b"/></g></g>
-</svg>
+
+<!-- ===== Workspace: sidebar + canvas ===== -->
+<div id="workspace">
+  <!-- Layer sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-header"><span>Layers</span><button id="add-layer" title="Add new letter">+</button></div>
+    <div id="layer-list"></div>
+    <div class="sidebar-footer">
+      <button id="export-btn" title="Export project as JSON">Export</button>
+      <button id="import-btn" title="Import project from JSON">Import</button>
+      <input type="file" id="import-file" accept=".json" hidden>
+    </div>
+  </div>
+  <!-- Canvas -->
+  <div id="stage">
+    <svg id="paper" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <rect id="sheet" x="-2000" y="-2000" width="5000" height="4600" fill="#fff"/>
+      <g id="rule"></g>
+      <g id="ref" style="display:none"><image id="refimg" preserveAspectRatio="none"/></g>
+      <g id="inactive"></g>
+      <g id="ghost"></g><g id="refui"></g><g id="guides"></g><g id="ink"></g>
+      <g id="pen" style="display:none"><g transform="rotate(32)">
+        <polygon points="0,0 -9,-32 9,-32" fill="#e9c58f"/><polygon points="0,0 -3.2,-11 3.2,-11" fill="#2b2f3a"/>
+        <rect x="-9" y="-132" width="18" height="100" fill="#f5c230"/><rect x="-2" y="-132" width="4" height="100" fill="#e2a90f"/>
+        <rect x="-9.5" y="-146" width="19" height="14" fill="#aeb6c4"/><rect x="-9.5" y="-141" width="19" height="3" fill="#8d96a8"/>
+        <rect x="-9.5" y="-160" width="19" height="14" rx="5" fill="#f08c9b"/></g></g>
+    </svg>
+  </div>
 </div>
+
 <button id="show">Show controls</button>
-<script>
-const $=s=>document.querySelector(s),NS='http://www.w3.org/2000/svg';
-const svg=$('#paper'),G=$('#ghost'),GU=$('#guides'),INK=$('#ink'),PEN=$('#pen'),body=document.body;
-const ASC='bdfhijklt\u0431\u044a\u0439\u0451\u0444',DESC='gjpqy\u0443\u04af\u0446\u0449\u0434\u0440\u0444';
-let strokes=[],redo=[],kind='upper',showClean=false,cur=null,raf=0,P=null,page='slant',sm=75,fl=null,lastRaw=null;
-let tool='free',sel=-1,selNode=-1,penOpen=false,drag=null,rdrag=null,speed=1;
-const CFG0={hs:300,ds:560,th:1,mx:870,px:0},cfg={...CFG0};
-const ref={href:null,x:0,y:0,w:0,h:0,ar:1,base:1,op:.5,vis:true,adj:false};
-const PAL=[[240,138,36],[167,139,219],[63,174,106]].map(c=>'rgb('+c.join(',')+')');
-const msg=t=>$('#msg').textContent=t||'';
-const isV=s=>!Array.isArray(s),dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 
-/* ---------- vector helpers ---------- */
-function vecD(n,tr,k){tr=tr||(p=>p);k=k||1;const f=v=>v.toFixed(2),q=p=>f(p[0])+' '+f(p[1]),a=tr(n[0].p);
-  if(n.length===1)return`M${q(a)}L${f(a[0]+.01)} ${f(a[1])}`;
-  let d='M'+q(a);
-  for(let i=0;i<n.length-1;i++){const A=n[i],B=n[i+1],pa=tr(A.p),pb=tr(B.p);
-    if(!A.o[0]&&!A.o[1]&&!B.i[0]&&!B.i[1])d+='L'+q(pb);
-    else d+='C'+q([pa[0]+A.o[0]*k,pa[1]+A.o[1]*k])+' '+q([pb[0]+B.i[0]*k,pb[1]+B.i[1]*k])+' '+q(pb)}
-  return d}
-function vecPts(n){if(n.length===1)return[n[0].p];const o=[];
-  for(let i=0;i<n.length-1;i++){const A=n[i],B=n[i+1],p0=A.p,p1=[A.p[0]+A.o[0],A.p[1]+A.o[1]],p2=[B.p[0]+B.i[0],B.p[1]+B.i[1]],p3=B.p;
-    for(let k=0;k<=24;k++){const t=k/24,u=1-t,a=u*u*u,b=3*u*u*t,c=3*u*t*t,d=t*t*t;o.push([a*p0[0]+b*p1[0]+c*p2[0]+d*p3[0],a*p0[1]+b*p1[1]+c*p2[1]+d*p3[1]])}}
-  return o}
-function dseg(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/l)):0;return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)}
-function pick(p){for(let i=strokes.length-1;i>=0;i--){const s=strokes[i],q=isV(s)?vecPts(s.nodes):s;
-  if(q.length===1?dist(p,q[0])<14:q.some((a,j)=>j&&dseg(p,q[j-1],a)<14))return i}return -1}
-function toggleSmooth(ns,i){const n=ns[i];
-  if(n.o[0]||n.o[1]||n.i[0]||n.i[1]){n.o=[0,0];n.i=[0,0];n.s=false;return}
-  const pr=ns[i-1],nx=ns[i+1];if(!pr&&!nx)return;
-  const a=pr?pr.p:n.p,b=nx?nx.p:n.p,m=dist(a,b)||1,L=Math.min(pr?dist(pr.p,n.p):1e9,nx?dist(n.p,nx.p):1e9)/3;
-  const dx=(b[0]-a[0])/m*L,dy=(b[1]-a[1])/m*L;n.o=[dx,dy];n.i=[-dx,-dy];n.s=true}
-function hit(p){const s=strokes[sel];if(sel<0||!s||!isV(s))return null;const ns=s.nodes,R=11;
-  for(let i=ns.length-1;i>=0;i--)for(const k of['o','i']){const q=ns[i][k];if((q[0]||q[1])&&Math.hypot(ns[i].p[0]+q[0]-p[0],ns[i].p[1]+q[1]-p[1])<R)return{t:k,n:i}}
-  for(let i=ns.length-1;i>=0;i--)if(dist(ns[i].p,p)<R)return{t:'n',n:i,off:[ns[i].p[0]-p[0],ns[i].p[1]-p[1]]};
-  return null}
-
-/* ---------- tools ---------- */
-function finish(){penOpen=false;if(tool==='pen')sel=-1;selNode=-1;paint();btns()}
-function setTool(t){if(penOpen)penOpen=false;tool=t;if(t!=='select')sel=-1;selNode=-1;
-  document.querySelectorAll('#tools button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
-  svg.classList.toggle('sel',t==='select');paint();btns();
-  msg(t==='pen'?'Pen: click for corner points, click and drag for smooth curves. Enter or double-click the last point to finish a path.':t==='select'?'Select: click a path, drag its points and handles. Double-click a point to switch smooth / corner. Hold Alt to bend one handle.':'')}
-document.querySelectorAll('#tools button').forEach(b=>b.onclick=()=>setTool(b.dataset.t));
-$('#finish').onclick=finish;
-function delPoint(){const s=strokes[sel];if(!s||!isV(s)||selNode<0)return;s.nodes.splice(selNode,1);selNode=-1;if(!s.nodes.length){strokes.splice(sel,1);sel=-1;penOpen=false}paint();btns()}
-function delPath(){if(sel<0)return;strokes.splice(sel,1);sel=-1;selNode=-1;penOpen=false;paint();btns()}
-$('#delpt').onclick=delPoint;$('#delpath').onclick=delPath;
-
-/* ---------- pointer input ---------- */
-function pt(e){const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(svg.getScreenCTM().inverse());return[p.x,p.y]}
-svg.addEventListener('pointerdown',e=>{
-  if(body.dataset.mode!=='draw'||(e.button&&e.button!==0))return;
-  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
-  const p=pt(e);
-  if(ref.adj){if(!ref.href)return;svg.setPointerCapture(e.pointerId);e.preventDefault();
-    if(Math.hypot(p[0]-ref.x-ref.w,p[1]-ref.y-ref.h)<26)rdrag={t:'s'};
-    else if(p[0]>=ref.x&&p[0]<=ref.x+ref.w&&p[1]>=ref.y&&p[1]<=ref.y+ref.h)rdrag={t:'m',off:[ref.x-p[0],ref.y-p[1]]};
-    return}
-  if(showClean)return;
-  svg.setPointerCapture(e.pointerId);e.preventDefault();
-  if(tool==='free'){fl=lastRaw=p;cur=[fl];redo=[];msg();paint();return}
-  const h=hit(p);
-  if(h){selNode=h.n;drag=h;if(h.t!=='n')drag.alt=e.altKey;paint();btns();return}
-  if(tool==='pen'){
-    if(!penOpen||!strokes.length||!isV(strokes[strokes.length-1])){strokes.push({nodes:[]});redo=[];penOpen=true}
-    sel=strokes.length-1;const s=strokes[sel];s.nodes.push({p,i:[0,0],o:[0,0],s:false});selNode=s.nodes.length-1;
-    drag={t:'new',n:selNode,st:p};msg();paint();btns()}
-  else{sel=pick(p);selNode=-1;paint();btns()}});
-svg.addEventListener('pointermove',e=>{
-  if(rdrag){const p=pt(e);
-    if(rdrag.t==='m'){ref.x=p[0]+rdrag.off[0];ref.y=p[1]+rdrag.off[1]}
-    else{ref.w=Math.max(40,p[0]-ref.x);ref.h=ref.w/ref.ar;$('#r-sz').value=Math.min(300,Math.max(20,Math.round(ref.w/ref.base*100)))}
-    drawRef();return}
-  if(drag){const p=pt(e),s=strokes[sel];if(!s||!isV(s))return;const n=s.nodes[drag.n];
-    if(drag.t==='n')n.p=[p[0]+drag.off[0],p[1]+drag.off[1]];
-    else if(drag.t==='new'){const v=[p[0]-drag.st[0],p[1]-drag.st[1]];if(Math.hypot(v[0],v[1])>6){n.o=v;n.i=[-v[0],-v[1]];n.s=true}}
-    else{const o=[p[0]-n.p[0],p[1]-n.p[1]],q=drag.t==='o'?'i':'o';n[drag.t]=o;
-      if(drag.alt||e.altKey)n.s=false;else if(n.s)n[q]=[-o[0],-o[1]]}
-    paint();return}
-  if(!cur)return;const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];
-  const a=1-.55*sm/100;for(const ev of(evs.length?evs:[e])){const p=pt(ev),l=cur[cur.length-1];lastRaw=p;fl=[fl[0]+(p[0]-fl[0])*a,fl[1]+(p[1]-fl[1])*a];if(Math.hypot(fl[0]-l[0],fl[1]-l[1])>1.5)cur.push(fl)}paint()});
-const end=()=>{if(rdrag){rdrag=null;return}if(drag){drag=null;paint();btns();return}
-  if(!cur)return;const l=cur[cur.length-1];if(lastRaw&&cur.length>1&&Math.hypot(lastRaw[0]-l[0],lastRaw[1]-l[1])>1.5)cur.push(lastRaw);
-  if(cur.length===1)cur.push([cur[0][0],cur[0][1]]);strokes.push(cur);cur=null;paint();btns()};
-svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
-svg.addEventListener('dblclick',e=>{if(body.dataset.mode!=='draw'||showClean||ref.adj||tool==='free')return;
-  const h=hit(pt(e));if(!h||h.t!=='n')return;const s=strokes[sel];
-  if(tool==='pen'&&penOpen&&h.n===s.nodes.length-1){finish();return}
-  toggleSmooth(s.nodes,h.n);paint()});
-
-/* ---------- cleanup ---------- */
-function resample(p,step){
-  const o=[p[0].slice()];let acc=0,prev=p[0];
-  for(let i=1;i<p.length;i++){let a=prev,b=p[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);
-    while(acc+d>=step){const t=(step-acc)/d;a=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];o.push(a);d=Math.hypot(b[0]-a[0],b[1]-a[1]);acc=0}
-    acc+=d;prev=p[i]}
-  const l=p[p.length-1],q=o[o.length-1];
-  if(Math.hypot(l[0]-q[0],l[1]-q[1])>step*.35)o.push(l.slice());else o[o.length-1]=l.slice();
-  return o}
-/* Taubin smoothing: alternating shrink/inflate passes remove wobble without collapsing curves; ends stay pinned */
-function smooth(s,n){
-  const step=l=>{const c=s.map(p=>p.slice());
-    for(let i=1;i<s.length-1;i++)for(let j=0;j<2;j++)s[i][j]=c[i][j]+l*((c[i-1][j]+c[i+1][j])/2-c[i][j])};
-  for(let k=0;k<n;k++){step(.5);step(-.53)}
-  return s}
-function isStraight(s){
-  const a=s[0],b=s[s.length-1],c=Math.hypot(b[0]-a[0],b[1]-a[1]);if(c<25)return false;
-  let m=0;for(const p of s)m=Math.max(m,Math.abs((p[0]-a[0])*(b[1]-a[1])-(p[1]-a[1])*(b[0]-a[0]))/c);
-  return m<=Math.max(5,.035*c)}
-function cleanStroke(st){
-  let len=0;for(let i=1;i<st.length;i++)len+=Math.hypot(st[i][0]-st[i-1][0],st[i][1]-st[i-1][1]);
-  if(len<12){const c=st.reduce((a,p)=>[a[0]+p[0]/st.length,a[1]+p[1]/st.length],[0,0]);return[[c,[c[0]+.01,c[1]]]]}
-  const r=smooth(resample(st,5),10),n=r.length,K=4,ang=new Array(n).fill(0);
-  for(let i=K;i<n-K;i++){const a=[r[i][0]-r[i-K][0],r[i][1]-r[i-K][1]],b=[r[i+K][0]-r[i][0],r[i+K][1]-r[i][1]];
-    const m=Math.hypot(...a)*Math.hypot(...b);ang[i]=m?Math.acos(Math.max(-1,Math.min(1,(a[0]*b[0]+a[1]*b[1])/m))):0}
-  const cuts=[0];
-  for(let i=K+1;i<n-K-1;i++){if(ang[i]<1.25)continue;let mx=true;for(let j=i-K;j<=i+K;j++)if(ang[j]>ang[i]||(ang[j]===ang[i]&&j<i))mx=false;
-    if(mx&&i-cuts[cuts.length-1]>K+1)cuts.push(i)}
-  cuts.push(n-1);
-  const segs=[];
-  for(let c=0;c<cuts.length-1;c++){
-    let s=smooth(r.slice(cuts[c],cuts[c+1]+1).map(p=>p.slice()),8+Math.round(sm*.6));
-    if(s.length<2)continue;
-    if(isStraight(s)){segs.push([s[0],s[s.length-1]]);continue}
-    const sp=sm>85?5:4,d=[s[0]];for(let i=sp;i<s.length-2;i+=sp)d.push(s[i]);d.push(s[s.length-1]);segs.push(d)}
-  return segs}
-/* Where the letter goes: centred in the real writing area (left of the margin), plus the user's offset */
-function target(){
-  const lab=[...$('#lab').value.trim()],ch=lab[0]||'',w=kind==='word'||(kind==='lower'&&lab.length>1),
-    lo=kind==='lower'&&!w,a=lo&&ASC.includes(ch),d=w?lab.some(c=>DESC.includes(c)):lo&&DESC.includes(ch);
-  const L=40,R=page==='slant'?cfg.mx-40:960,cx=(L+R)/2+cfg.px;let y0,y1;
-  {const B=page==='slant'?360:345,b=page==='slant'?cfg.hs/3:85;y0=lo&&!a?B-b:B-2*b;y1=d?B+b:B}
-  const mw=w?R-L:Math.min(R-L,500);
-  return{x0:cx-mw/2,x1:cx+mw/2,cx,y0,y1,al:w&&d?'c':d?'t':'b'}}
-function bez(pts,first){
-  let d=first?`M${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`:'';
-  for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2,f=v=>v.toFixed(2);
-    d+=`C${f(p1[0]+(p2[0]-p0[0])/6)} ${f(p1[1]+(p2[1]-p0[1])/6)} ${f(p2[0]-(p3[0]-p1[0])/6)} ${f(p2[1]-(p3[1]-p1[1])/6)} ${f(p2[0])} ${f(p2[1])}`}
-  return d}
-/* Freehand strokes are smoothed; pen paths keep their exact nodes and handles (same scale and shift only) */
-function buildClean(){
-  const pre=strokes.map(s=>isV(s)?{v:s.nodes}:{g:cleanStroke(s)}),flat=[];
-  for(const q of pre)flat.push(...(q.v?vecPts(q.v):q.g.flat()));
-  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-  for(const p of flat){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1])}
-  const w=Math.max(x1-x0,1),h=Math.max(y1-y0,1),T=target(),s=Math.min((T.x1-T.x0)/w,(T.y1-T.y0)/h);
-  const ox=T.cx-(x0+x1)/2*s;
-  const oy=T.al==='b'?T.y1-y1*s:T.al==='t'?T.y0-y0*s:(T.y0+T.y1)/2-(y0+y1)/2*s;
-  const tr=p=>[p[0]*s+ox,p[1]*s+oy];
-  return pre.map(q=>q.v?vecD(q.v,tr,s):q.g.map(sg=>sg.map(tr)).map((sg,i)=>bez(sg,i===0)).join(''))}
-
-/* ---------- edit rendering ---------- */
-const E=(n,a,t)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;return e};
-function paint(){
-  let h='';const list=cur?[...strokes,cur]:strokes,gh=showClean?' ghosted':'';
-  list.forEach((s,i)=>{const on=i===sel&&!showClean?' sel':'';let f;
-    if(isV(s)){if(!s.nodes.length)return;h+=`<path class="orig${gh}${on}" d="${vecD(s.nodes)}"/>`;f=s.nodes[0].p}
-    else{h+=`<polyline class="orig${gh}${on}" points="${s.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`;f=s[0]}
-    if(!showClean)h+=`<circle class="bn" cx="${f[0]-24}" cy="${f[1]-24}" r="13"/><text class="bt" x="${f[0]-24}" y="${f[1]-24}">${i+1}</text>`});
-  if(showClean&&strokes.length)h+=buildClean().map(d=>`<path class="cp" d="${d}"/>`).join('');
-  if(!showClean&&sel>=0&&strokes[sel]&&isV(strokes[sel])){
-    strokes[sel].nodes.forEach((n,i)=>{
-      for(const k of['i','o']){const q=n[k];if(q[0]||q[1]){const x=n.p[0]+q[0],y=n.p[1]+q[1];
-        h+=`<line class="hl" x1="${n.p[0]}" y1="${n.p[1]}" x2="${x}" y2="${y}"/><circle class="hd" cx="${x}" cy="${y}" r="6"/>`}}
-      const c=i===selNode?' on':'';
-      h+=n.s?`<circle class="nd${c}" cx="${n.p[0]}" cy="${n.p[1]}" r="7.5"/>`:`<rect class="nd${c}" x="${n.p[0]-7}" y="${n.p[1]-7}" width="14" height="14"/>`})}
-  G.innerHTML=h}
-function btns(){const v=strokes[sel]&&isV(strokes[sel]);
-  $('#undo').disabled=!strokes.length||showClean;$('#redo').disabled=!redo.length||showClean;$('#clear').disabled=!strokes.length||showClean;
-  $('#finish').hidden=!(tool==='pen'&&penOpen);
-  $('#delpt').hidden=!(tool==='select'&&v&&selNode>=0);$('#delpath').hidden=!(tool==='select'&&sel>=0)}
-$('#undo').onclick=()=>{const l=strokes[strokes.length-1];
-  if(penOpen&&l&&isV(l)&&l.nodes.length>1){l.nodes.pop();selNode=l.nodes.length-1;paint();return}
-  if(strokes.length){redo.push(strokes.pop());penOpen=false;sel=-1;selNode=-1;paint();btns()}};
-$('#redo').onclick=()=>{if(redo.length){strokes.push(redo.pop());paint();btns()}};
-$('#clear').onclick=()=>{strokes=[];redo=[];sel=-1;selNode=-1;penOpen=false;paint();btns();msg()};
-$('#prev').onclick=()=>{if(!strokes.length)return msg('Draw at least one stroke first.');
-  if(penOpen)finish();showClean=!showClean;
-  $('#prev').textContent=showClean?'Back to drawing':'Preview clean';$('#prev').classList.toggle('on',showClean);
-  msg(showClean?'Cleaned version (solid) over your original (dotted red). Your drawing is unchanged.':'');paint();btns()};
-document.querySelectorAll('#kinds button').forEach(b=>b.onclick=()=>setKind(b.dataset.k));
-function setKind(k){kind=k;document.querySelectorAll('#kinds button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));if(body.dataset.mode==='draw')paint()}
-$('#lab').addEventListener('input',()=>{const l=[...$('#lab').value.trim()],c=l[0]||'';
-  if(l.length>1)setKind('word');else if(/\d/.test(c))setKind('num');
-  else if(c&&c!==c.toLowerCase())setKind('upper');else if(c&&c!==c.toUpperCase())setKind('lower');
-  if(body.dataset.mode==='draw')paint()});
-
-/* ---------- page style ---------- */
-function slantSVG(){const{hs,ds,th,mx}=cfg,B=360,b=hs/3,s=.4;let d='',h='',z='';
-  for(let n=-16;n<=16;n++){const x=330+ds*n;d+=`M${(x-840*s).toFixed(1)} 1200L${(x+1560*s).toFixed(1)} -1200`}
-  for(let k=-14;k<=14;k++){const t=B-b+hs*k;h+=`M-2000 ${t}H3000M-2000 ${t+b}H3000`;z+=`M-2000 ${t+2*b}H3000`}
-  return`<path d="${d}" fill="none" stroke="#a3a8d8" stroke-width="${1.8*th}"/><path d="${h}" fill="none" stroke="#6a70b5" stroke-width="${2*th}"/><path d="${z}" fill="none" stroke="#8c91c8" stroke-width="${1.8*th}" stroke-dasharray="10 9"/><line x1="${mx}" x2="${mx}" y1="-2000" y2="2600" stroke="#d32f2f" stroke-width="${3.2*th}"/>`}
-function drawRule(){const pc='#fff',g=200;$('#sheet').setAttribute('fill',pc);document.documentElement.style.setProperty('--paper',pc);
-  $('#rule').innerHTML=page==='slant'?slantSVG()
-  :`<defs><pattern id="gp" x="400" y="160" width="${g}" height="${g}" patternUnits="userSpaceOnUse"><path d="M${g} 0H0V${g}" fill="none" stroke="#9cc3ea" stroke-width="${1.6*cfg.th}"/></pattern></defs><rect x="-2000" y="-2000" width="5000" height="4600" fill="url(#gp)"/>`}
-document.querySelectorAll('#pages button').forEach(b=>b.onclick=()=>{page=b.dataset.p;document.querySelectorAll('#pages button').forEach(x=>x.classList.toggle('on',x===b));drawRule();paint()});
-$('#sm').oninput=e=>{sm=+e.target.value;if(showClean)paint()};
-$('#sw').oninput=e=>{svg.style.setProperty('--sw',e.target.value);$('#swv').textContent=e.target.value};
-let zoom=1;
-function applyZoom(){const w=1000/zoom,h=600/zoom;svg.setAttribute('viewBox',`${500-w/2} ${300-h/2} ${w} ${h}`);$('#zr').textContent=Math.round(zoom*100)+'%'}
-$('#zi').onclick=()=>{zoom=Math.min(3,zoom*1.25);applyZoom()};
-$('#zo').onclick=()=>{zoom=Math.max(.5,zoom/1.25);applyZoom()};
-$('#zr').onclick=()=>{zoom=1;applyZoom()};
-$('#lab').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur()});
-const after=()=>{if(body.dataset.mode==='play')generate();else paint()};
-$('#c-px').oninput=e=>{cfg.px=+e.target.value;after()};
-$('#c-ctr').onclick=()=>{cfg.px=0;$('#c-px').value=0;after()};
-$('#cfgb').onclick=()=>{const p=$('#panel');p.hidden=!p.hidden;$('#cfgb').classList.toggle('on',!p.hidden)};
-
-/* ---------- reference image (tracing layer, never animated) ---------- */
-function drawRef(){const on=!!ref.href,im=$('#refimg');
-  $('#ref').style.display=on&&ref.vis?'':'none';
-  if(on){im.setAttribute('href',ref.href);im.setAttribute('x',ref.x);im.setAttribute('y',ref.y);im.setAttribute('width',ref.w);im.setAttribute('height',ref.h);im.setAttribute('opacity',ref.op)}
-  $('#refui').innerHTML=on&&ref.vis&&ref.adj?`<rect class="rb" x="${ref.x}" y="${ref.y}" width="${ref.w}" height="${ref.h}"/><rect class="rh" x="${ref.x+ref.w-10}" y="${ref.y+ref.h-10}" width="20" height="20" rx="4"/>`:'';
-  for(const id of['r-vis','r-op','r-sz','r-adj','r-del'])$('#'+id).disabled=!on;
-  $('#r-vis').textContent=ref.vis?'Hide':'Show';$('#r-adj').classList.toggle('on',ref.adj)}
-$('#r-imp').onclick=()=>$('#r-file').click();
-$('#r-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const fr=new FileReader();
-  fr.onload=()=>{const im=new Image();im.onload=()=>{
-    ref.ar=im.naturalWidth/im.naturalHeight||1;ref.w=Math.min(600,420*ref.ar);ref.h=ref.w/ref.ar;ref.base=ref.w;
-    ref.x=cfg.mx/2-ref.w/2;ref.y=300-ref.h/2;ref.href=fr.result;ref.vis=true;ref.adj=false;
-    $('#r-sz').value=100;ref.op=$('#r-op').value/100;drawRef();msg('Reference image added. It sits under your strokes and is never animated.')};
-    im.onerror=()=>msg('That file could not be read as an image.');im.src=fr.result};
-  fr.readAsDataURL(f);e.target.value=''};
-$('#r-vis').onclick=()=>{ref.vis=!ref.vis;if(!ref.vis)ref.adj=false;drawRef()};
-$('#r-op').oninput=e=>{ref.op=e.target.value/100;drawRef()};
-$('#r-sz').oninput=e=>{const cx=ref.x+ref.w/2,cy=ref.y+ref.h/2;ref.w=ref.base*e.target.value/100;ref.h=ref.w/ref.ar;ref.x=cx-ref.w/2;ref.y=cy-ref.h/2;drawRef()};
-$('#r-adj').onclick=()=>{ref.adj=!ref.adj;if(ref.adj&&body.dataset.mode==='draw'&&penOpen)finish();drawRef();
-  msg(ref.adj?'Drag the image to move it, drag the blue corner to resize. Click Move / resize again to go back to drawing.':'')};
-$('#r-del').onclick=()=>{ref.href=null;ref.adj=false;drawRef();msg('Reference image removed.')};
-
-/* ---------- animation ---------- */
-const ease=u=>.5-.5*Math.cos(Math.PI*Math.min(1,Math.max(0,u)));
-function generate(){
-  if(!strokes.length)return msg('Draw at least one stroke first.');
-  if(penOpen){penOpen=false;sel=-1}ref.adj=false;drawRef();
-  showClean=false;$('#prev').textContent='Preview clean';$('#prev').classList.remove('on');
-  const ds=buildClean();G.innerHTML='';GU.innerHTML='';INK.innerHTML='';msg();
-  const items=ds.map((d,i)=>{
-    const g=E('path',{d,class:'gd'});GU.appendChild(g);const ink=g;
-    const len=ink.getTotalLength(),at=l=>{const p=ink.getPointAtLength(Math.max(0,Math.min(len,l)));return[p.x,p.y]};
-    const a=at(0),b=at(Math.min(len,6)),tl=Math.hypot(b[0]-a[0],b[1]-a[1])||1,t=len>1?[(b[0]-a[0])/tl,(b[1]-a[1])/tl]:[1,0];
-    const ln=E('path',{d,class:'ink'});ln.style.strokeDasharray=`${len} ${len+4}`;INK.appendChild(ln);
-    GU.appendChild(E('circle',{class:'sd',cx:a[0],cy:a[1],r:9}));
-    const bx=a[0]-t[0]*38-t[1]*10,by=a[1]-t[1]*38+t[0]*10;
-    GU.appendChild(E('circle',{class:'bn',cx:bx,cy:by,r:14}));GU.appendChild(E('text',{class:'bt',x:bx,y:by},i+1));
-    if(len>50){const m=at(len*.5),m2=at(len*.5+4),m1=at(len*.5-4),an=Math.atan2(m2[1]-m1[1],m2[0]-m1[0])*180/Math.PI;
-      GU.appendChild(E('path',{class:'ar',d:'M-8 -8L4 0L-8 8',transform:`translate(${m[0]} ${m[1]}) rotate(${an})`}))}
-    return{ink:ln,col:PAL[i%3],len,at,dur:Math.max(.8,len/230)}});
-  let t=0;const ev=[];const first=items[0].at(0);
-  ev.push({t0:0,t1:.8,fn:()=>[first[0],first[1],0]});t=.8;
-  items.forEach((it,i)=>{
-    it.t0=t;it.t1=t+it.dur;ev.push({t0:it.t0,t1:it.t1,fn:u=>{const p=it.at(it.len*ease(u));return[p[0],p[1],0]}});t=it.t1;
-    const nx=items[i+1];
-    if(nx){const e=it.at(it.len),s=nx.at(0),dist=Math.hypot(s[0]-e[0],s[1]-e[1]),md=.45+dist/1100;
-      ev.push({t0:t,t1:t+.2,fn:()=>[e[0],e[1],0]});t+=.2;
-      ev.push({t0:t,t1:t+md,fn:u=>{const k=ease(u);return[e[0]+(s[0]-e[0])*k,e[1]+(s[1]-e[1])*k,26*Math.sin(Math.PI*u)]}});t+=md;
-      ev.push({t0:t,t1:t+.2,fn:()=>[s[0],s[1],0]});t+=.2}});
-  const l=items[items.length-1].at(items[items.length-1].len);
-  ev.push({t0:t,t1:t+1.2,fn:()=>[l[0],l[1],0]});t+=1.2;
-  P={items,ev,end:t};
-  body.dataset.mode='play';PEN.style.display='';btns();play()}
-function render(t){
-  for(const it of P.items){const u=ease((t-it.t0)/it.dur);it.ink.style.stroke=it.col;it.ink.style.display=u<=0?'none':'';it.ink.style.strokeDashoffset=it.len*(1-u)}
-  let e=P.ev[P.ev.length-1],u=1;for(const x of P.ev)if(t<x.t1){e=x;u=(t-x.t0)/(x.t1-x.t0);break}
-  const p=e.fn(Math.min(1,Math.max(0,u)));PEN.setAttribute('transform',`translate(${p[0].toFixed(2)} ${(p[1]-p[2]).toFixed(2)})`)}
-function play(){cancelAnimationFrame(raf);if(!P)return;let t=0,l=performance.now();
-  const f=n=>{t+=Math.min(.1,(n-l)/1000)*speed;l=n;if(t>=P.end){render(P.end);return}render(t);raf=requestAnimationFrame(f)};raf=requestAnimationFrame(f)}
-$('#gen').onclick=generate;$('#replay').onclick=play;
-$('#spd').oninput=e=>{speed=e.target.value/100;$('#spv').textContent=speed+'×'};
-$('#edit').onclick=()=>{cancelAnimationFrame(raf);P=null;GU.innerHTML='';INK.innerHTML='';PEN.style.display='none';
-  if(document.fullscreenElement)document.exitFullscreen();body.classList.remove('hideui');body.dataset.mode='draw';paint();btns()};
-$('#hide').onclick=()=>body.classList.add('hideui');
-$('#show').onclick=()=>body.classList.remove('hideui');
-$('#full').onclick=async()=>{body.classList.add('hideui');try{await document.documentElement.requestFullscreen()}catch(e){}};
-document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)body.classList.remove('hideui')});
-svg.addEventListener('click',()=>{if(body.dataset.mode==='play'&&body.classList.contains('hideui'))play()});
-addEventListener('keydown',e=>{if(e.target.id==='lab')return;
-  const k=e.key.toLowerCase(),draw=body.dataset.mode==='draw';
-  if((e.ctrlKey||e.metaKey)&&!e.altKey&&(k==='z'||k==='y')){e.preventDefault();
-    if(draw&&!showClean&&!cur)((k==='y'||e.shiftKey)?$('#redo'):$('#undo')).click();return}
-  if(draw&&tool==='pen'&&penOpen&&(e.key==='Enter'||e.key==='Escape')){e.preventDefault();finish();return}
-  if(draw&&tool==='select'&&(e.key==='Delete'||e.key==='Backspace')&&sel>=0&&e.target.tagName!=='INPUT'){e.preventDefault();(selNode>=0&&isV(strokes[sel]))?delPoint():delPath();return}
-  if(e.code==='Space'&&!draw){e.preventDefault();play()}
-  if(e.key==='Escape')body.classList.remove('hideui')});
-drawRule();paint();btns();drawRef();msg('Draw each stroke separately, in the order you would write it.');
-</script>
+<script src="app.js"></script>
+<script src="drawing.js"></script>
+<script src="animation.js"></script>
 </body>
 </html>
